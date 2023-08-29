@@ -1,0 +1,6 @@
+version: '3.7'
+services:
+  todo-native:
+    image: asia-northeast3-docker.pkg.dev/spring-native-run/quickstart-docker-repo/quickstart-image:tag1
+    ports:
+      - "8080:8080"

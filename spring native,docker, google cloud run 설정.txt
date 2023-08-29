@@ -1,0 +1,72 @@
+--- 사전 준비
+1. docker 설치 필요
+2. graalvm JDK 17버전 필요
+ - 인텔리J에서 다운로드 및 변경
+ - PATH 및 JAVA_HOME 환경변수 설정
+3. (윈도우즈) Visual Studio 빌드툴(19버전 필요)
+ - windows 11 SDK 체크
+4. (윈도우즈) C++ 빌드툴 컴파일러 위치 PATH에 추가
+ - C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64
+4. (윈도우즈) native-image.cmd에  -H:-CheckToolchain 옵션 필요
+ - C:\Users\tjoeun\.jdks\graalvm-ce-17\bin
+5. (윈도우즈) 도커데몬 서비스 시작 필요
+
+--- 컴파일 및 이미지 생성, 테스트 컨테이너 실행
+1. 네이티브로 컴파일
+  - gradlew nativeCompile
+2. 네이티브 이미지 생성
+  - gradlew bootBuildImage
+  - build.gradle에 아래와 같이 추가하면 이미지명 넣을 수 있음
+  bootBuildImage {
+	imageName = "asia-northeast3-docker.pkg.dev/spring-native-run/quickstart-docker-repo/quickstart-image:tag1"
+  }
+3. 도커 이미지 확인
+  - docker images
+4. 컨테이너 실행
+  - docker run -p 8080:8080 repository:tag
+
+-- 이미지를 Google Cloud Artifact Repository에 푸시
+https://cloud.google.com/artifact-registry/docs/docker/store-docker-container-images?hl=ko#windows
+https://cloud.google.com/artifact-registry/docs/docker/store-docker-container-images?hl=ko#windows
+1. docker에 레지스트리를 연결하기 위한 권한 추가
+ - (윈도우즈) net localgroup docker-users "사용자명" /ADD
+2. 구글 클라우드에 Artifact Registry API 사용설정
+  - https://console.cloud.google.com/flows/enableapi?apiid=artifactregistry.googleapis.com&%3Bredirect=https%3A%2F%2Fcloud.google.com%2Fartifact-registry%2Fdocs%2Fdocker%2Fquickstart&hl=ko&_ga=2.39613803.959522785.1692671587-1118136980.1690348941
+3. Artifact Registry에 Docker 저장소 생성
+  - https://console.cloud.google.com/artifacts?hl=ko&_ga=2.39613803.959522785.1692671587-1118136980.1690348941
+4. Docker 저장소 인증 구성
+ - gcloud auth configure-docker asia-northeast3-docker.pkg.dev
+5. 도커 이미지 저장소 및 태그 변경
+ - docker tag 스프링프로젝트명:태그명 asia-northeast3-docker.pkg.dev/spring-native-run/quickstart-docker-repo/quickstart-image:tag1
+ - 리전-docker.pkg.dev/프로젝트명/저장소명/이미지명:태그명(없을시에 latest)
+6. 도커 이미지 저장소로 푸시
+ - docker push 리전-docker.pkg.dev/프로젝트명/저장소명/이미지명:태그명(없을시에 latest)
+
+
+-- Google Clound Run에 배포
+1. Artifact Repository 이미지로 배포
+-
+gcloud run deploy 서비스명 --image \
+리전명-docker.pkg.dev/프로젝트명/저장소명/이미지명:태그명 \
+--platform managed --region 리전명 --allow-unauthenticated 
+-
+gcloud run deploy spring-native-run --image asia-northeast3-docker.pkg.dev/spring-native-run/quickstart-docker-repo/quickstart-image:tag1 --platform managed --region asia-northeast3 --allow-unauthenticated
+
+2. 배포 url에서 확인
+- 
+https://spring-native-run-a4lgvrdoba-du.a.run.app/hello
+
+
+
+
+////////////////////////////////////////////////////////
+** 프로필 환경변수 사용
+- 스프링 프로퍼티 파일: application-prod.properties
+- spring.profiles.active = prod
+- 개발할 때는 실행구성에서 vm옵션에 -Dspring.profiles.active=default 로 넣는다.
+
+** 로컬 호스트 탐색
+localhost 대신에 host.docker.internal를 사용한다
+
+** docker compose
+compose.yml을 이용하여 사용

@@ -1,0 +1,3 @@
+services:
+  invoker:
+    image: asia-northeast3-docker.pkg.dev/spring-native-run/quickstart-docker-repo/invoker-image:v1
