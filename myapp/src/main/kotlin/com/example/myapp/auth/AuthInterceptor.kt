@@ -18,6 +18,7 @@ class AuthInterceptor : HandlerInterceptor {
         if (handler is HandlerMethod) {
             val handlerMethod: HandlerMethod = handler
             val method: Method = handlerMethod.method
+            println(method)
             // @Auth 어노테이션이 있는지 확인
             if(method.getAnnotation(Auth::class.java) == null) {
                 // @Auth 어노테이션이 없으면 토큰 관련 처리를 별도로 하지 않음
@@ -48,6 +49,7 @@ class AuthInterceptor : HandlerInterceptor {
                 return false
             }
 
+            println(profile)
             // 4. 요청 속성(attribute)에 프로필 객체 추가하기
             request.setAttribute("authProfile", profile)
             return true

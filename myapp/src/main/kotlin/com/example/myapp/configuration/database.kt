@@ -34,12 +34,9 @@ class DatabaseConfiguration (val dataSource: DataSource) {
         return Database.connect(dataSource)
     }
 
-    @Value("\${spring.exposed.show-sql:false}")
-    private var showSql: Boolean = false
-
     @Bean
     fun springTransactionManager(datasource: DataSource, databaseConfig: DatabaseConfig): SpringTransactionManager {
-        return SpringTransactionManager(datasource, databaseConfig, showSql)
+        return SpringTransactionManager(datasource, databaseConfig)
     }
 
 }

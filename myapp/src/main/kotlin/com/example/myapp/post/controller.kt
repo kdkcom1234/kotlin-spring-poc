@@ -1,5 +1,7 @@
 package com.example.myapp.post
 
+import com.example.myapp.auth.Auth
+import com.example.myapp.auth.AuthProfile
 import com.example.myapp.auth.Profiles
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -15,17 +17,18 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestAttribute
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.time.LocalDateTime
 
-data class PostResponse(val id : Long, val title : String, val content: String, val createdDate: LocalDateTime);
+data class PostResponse(val id : Long, val title : String, val content: String, val createdDate: String);
 data class PostCommentCountResponse(
     val id : Long,
     val title : String,
-    val createdDate: LocalDateTime,
+    val createdDate: String,
     val profileId : Long,
     val nickname: String,
     val commentCount : Long
@@ -43,7 +46,7 @@ class PostController() {
     @GetMapping
     fun fetch(): List<PostResponse> =
             Posts.selectAll()
-                .map { r -> PostResponse(r[Posts.id],  r[Posts.title], r[Posts.content], r[Posts.createdDate]) }
+                .map { r -> PostResponse(r[Posts.id],  r[Posts.title], r[Posts.content], r[Posts.createdDate].toString()) }
 
     @Transactional(readOnly = true)
     @GetMapping("/paging")
@@ -51,7 +54,7 @@ class PostController() {
         // 페이징 조회
         val content = Posts.selectAll()
             .orderBy(Posts.id to SortOrder.DESC).limit(size, offset= (size * page).toLong())
-            .map { r -> PostResponse(r[Posts.id],  r[Posts.title], r[Posts.content], r[Posts.createdDate]) }
+            .map { r -> PostResponse(r[Posts.id],  r[Posts.title], r[Posts.content], r[Posts.createdDate].toString()) }
         
         // 전체 결과 카운트
         val totalCount = Posts.selectAll().count();
@@ -74,7 +77,7 @@ class PostController() {
             .map { r ->
                 PostResponse(r[Posts.id],
                     r[Posts.title],
-                    r[Posts.content], r[Posts.createdDate])
+                    r[Posts.content], r[Posts.createdDate].toString())
             }
 
         // 전체 결과 카운트
@@ -109,7 +112,7 @@ class PostController() {
         val content = query
             .groupBy(p.id, p.title, p.profileId, pf.nickname)
             .orderBy(p.id to SortOrder.DESC).limit(size, offset= (size * page).toLong())
-            .map { r -> PostCommentCountResponse(r[p.id],  r[p.title], r[p.createdDate], r[p.profileId].value, r[pf.nickname], r[commentCount]) }
+            .map { r -> PostCommentCountResponse(r[p.id],  r[p.title], r[p.createdDate].toString(), r[p.profileId].value, r[pf.nickname], r[commentCount]) }
 
         // 전체 결과 카운트
         val totalCount = query.count();
@@ -118,8 +121,17 @@ class PostController() {
         return PageImpl(content, PageRequest.of(page, size), totalCount);
     }
 
+    @Auth
     @PostMapping
-    fun create(@RequestBody request : PostCreateRequest ) : ResponseEntity<Map<String, Any?>> {
+    fun create(@RequestBody request : PostCreateRequest, @RequestAttribute authProfile: AuthProfile? ) : ResponseEntity<Map<String, Any?>> {
+
+        println(authProfile)
+        if(authProfile == null) {
+            return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .build()
+        }
+
         if(request.title.isEmpty() || request.content.isEmpty()) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
@@ -130,6 +142,7 @@ class PostController() {
             it[title] = request.title
             it[content] = request.content
             it[createdDate] = LocalDateTime.now();
+            it[profileId] = authProfile.id
         }.resultedValues
             ?: return ResponseEntity
                 .status(HttpStatus.CONFLICT)
@@ -142,7 +155,7 @@ class PostController() {
                 record[Posts.id],
                 record[Posts.title],
                 record[Posts.content],
-                record[Posts.createdDate]
+                record[Posts.createdDate].toString()
             ), "message" to "created"))
     }
 
