@@ -24,13 +24,9 @@ import javax.sql.DataSource
 @EnableTransactionManagement
 @Configuration
 class DatabaseConfiguration (val dataSource: DataSource) {
-    @PostConstruct
-    fun setup() {
-        Database.connect(dataSource)
-        transaction {
-            SchemaUtils.createMissingTablesAndColumns(Identities, Profiles)
-            SchemaUtils.createMissingTablesAndColumns(Posts, PostComments)
-        }
+    @Bean
+    fun database(): Database {
+        return Database.connect(dataSource)
     }
 
     @Bean
@@ -41,7 +37,7 @@ class DatabaseConfiguration (val dataSource: DataSource) {
         private val stm: SpringTransactionManager
     ) : ResourceTransactionManager by stm, InitializingBean by stm, TransactionManager by stm {
         override fun getTransaction(definition: TransactionDefinition?): TransactionStatus {
-            TransactionManager.resetCurrent(null)
+            TransactionManager.resetCurrent(this)
             return stm.getTransaction(definition)
         }
     }
