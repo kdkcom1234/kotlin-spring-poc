@@ -48,6 +48,7 @@ class AuthController(private val service: AuthService) {
     //   Set-Cookie: 인증키=키........; domain=.naver.com
     //   Location: "리다이렉트 주소"
     //3. (브라우저) 쿠키를 생성(도메인에 맞게)
+    @Transactional(readOnly = true)
     @PostMapping(value = ["/signin"])
     fun signIn(
         @RequestParam username: String,

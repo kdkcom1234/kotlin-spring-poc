@@ -38,11 +38,14 @@ data class PostModifyRequest(val title : String?, val content: String?);
 @RestController
 @Transactional // transaction {} 대신에 필수적으로 넣어준다.
 class PostController() {
+
+    @Transactional(readOnly = true)
     @GetMapping
     fun fetch(): List<PostResponse> =
             Posts.selectAll()
                 .map { r -> PostResponse(r[Posts.id],  r[Posts.title], r[Posts.content], r[Posts.createdDate]) }
 
+    @Transactional(readOnly = true)
     @GetMapping("/paging")
     fun paging(@RequestParam size : Int, @RequestParam page : Int) : Page<PostResponse> {
         // 페이징 조회
@@ -57,6 +60,7 @@ class PostController() {
         return PageImpl(content, PageRequest.of(page, size),  totalCount);  
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/paging/search")
     fun searchPaging(@RequestParam size : Int, @RequestParam page : Int, @RequestParam keyword : String?) : Page<PostResponse> {
         val query = when {
@@ -80,6 +84,7 @@ class PostController() {
         return PageImpl(content, PageRequest.of(page, size),  totalCount);
     }
 
+    @Transactional(readOnly = true)
     @GetMapping("/commentCount")
     fun fetchCommentCount(@RequestParam size : Int, @RequestParam page : Int,
                           @RequestParam keyword : String?) : Page<PostCommentCountResponse> {
