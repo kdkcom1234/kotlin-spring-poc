@@ -26,9 +26,6 @@ dependencies {
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 
-	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jdbc
-	implementation("org.springframework.boot:spring-boot-starter-data-jdbc:3.1.3")
-
 	implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
 	implementation("org.jetbrains.exposed:exposed-crypt:$exposedVersion")
 	implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
