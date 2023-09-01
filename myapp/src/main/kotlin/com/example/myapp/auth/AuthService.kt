@@ -50,7 +50,7 @@ class AuthService(private val database: Database){
     }
 
     fun authenticate(username: String, password: String) : Pair<Boolean, String> =
-        transaction(database.transactionManager.defaultIsolationLevel, readOnly = true) {
+        transaction(Connection.TRANSACTION_NONE, readOnly = true) {
             val i = Identities;
             val p = Profiles;
 
