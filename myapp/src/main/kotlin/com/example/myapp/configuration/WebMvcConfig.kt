@@ -30,6 +30,6 @@ class WebMvcConfig(val authInterceptor: AuthInterceptor ) : WebMvcConfigurer {
 
     // 인증처리용 인터셉터를 추가
     override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(authInterceptor!!)
+        registry.addInterceptor(authInterceptor)
     }
 }
