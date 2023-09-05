@@ -57,39 +57,43 @@ class AuthService(private val database: Database){
         return profileId
     }
 
-    fun authenticate(username: String, password: String) : Pair<Boolean, String> =
-        transaction(database.transactionManager.defaultIsolationLevel, readOnly = true) {
+    fun authenticate(username: String, password: String) : Pair<Boolean, String> {
+        val (result, payload) = transaction(database.transactionManager.defaultIsolationLevel, readOnly = true) {
             val i = Identities;
             val p = Profiles;
 
-            // 1. username, pw 인증 확인
-            //   1.1 username으로 login테이블에서 조회후 id, secret까지 조회
-            // username에 매칭이 되는 레코드가 없는 상태
-            var identityRecord = i.select(i.username eq username).singleOrNull()
-                ?: return@transaction Pair(false, "Unauthorized")
+            // 인증정보 조회
+            val identityRecord = i.select(i.username eq username).singleOrNull()
+                ?: return@transaction Pair(false, mapOf("message" to "Unauthorized"))
 
-
-            //   1.2 password+salt -> 해시 -> secret 일치여부 확인
-            //   1.3 일치하면 다음코드를 실행
-            //   1.4 일치하지 않으면 401 Unauthorized 반환 종료
-            val isVerified = HashUtil.verifyHash(password, identityRecord[i.secret])
-            if (!isVerified) {
-                return@transaction Pair(false, "Unauthorized")
-            }
-
-            // 2. profile 정보를 조회하여 인증키 생성(JWT)
-            // 로그인정보와 프로필 정보가 제대로 연결 안됨.
+            // 프로필정보 조회
             val profileRecord = p.select(p.identityId eq identityRecord[i.id].value).singleOrNull()
-                ?: return@transaction Pair(false, "Conflict")
+                ?: return@transaction Pair(false, mapOf("message" to "Conflict"))
 
-            // 토큰 생성
-            val token = JwtUtil.createToken(
-                identityRecord[i.id].value,
-                identityRecord[i.username],
-                profileRecord[p.nickname]
-            )
+            return@transaction Pair(true, mapOf(
+                "id" to profileRecord[p.id],
+                "nickname" to profileRecord[p.nickname],
+                "username" to identityRecord[i.username],
+                "secret" to identityRecord[i.secret]
+            ))
+        }
 
-            return@transaction Pair(true, token)
+        if(!result) {
+            return Pair(false, payload["message"].toString());
+        }
+
+        //   password+salt -> 해시 -> secret 일치여부 확인
+        val isVerified = HashUtil.verifyHash(password, payload["secret"].toString())
+        if (!isVerified) {
+            return Pair(false, "Unauthorized")
+        }
+
+        val token = JwtUtil.createToken(
+            payload["id"].toString().toLong(),
+            payload["username"].toString(),
+            payload["nickname"].toString()
+        )
+
+        return Pair(true, token)
     }
-
 }
