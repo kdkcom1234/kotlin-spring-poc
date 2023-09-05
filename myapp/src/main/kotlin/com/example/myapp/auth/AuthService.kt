@@ -15,6 +15,14 @@ class AuthService(private val database: Database){
     private val logger = LoggerFactory.getLogger(this.javaClass.name)
 
     fun createIdentity(req: SignupRequest) : Long {
+        // 기존에 있는 계정인지 확인
+        val existedIdentity = transaction {
+            Identities.select(Identities.username eq req.username).singleOrNull()
+        }
+        if(existedIdentity != null){
+            return 0;
+        }
+
         val secret = HashUtil.createHash(req.password)
 
         val profileId = transaction {
