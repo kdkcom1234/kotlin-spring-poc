@@ -16,10 +16,10 @@ class AuthService(private val database: Database){
 
     fun createIdentity(req: SignupRequest) : Long {
         // 기존에 있는 계정인지 확인
-        val existedIdentity = transaction {
+        val record = transaction {
             Identities.select(Identities.username eq req.username).singleOrNull()
         }
-        if(existedIdentity != null){
+        if(record != null){
             return 0;
         }
 
