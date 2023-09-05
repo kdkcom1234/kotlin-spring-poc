@@ -40,12 +40,6 @@ class AuthService(private val database: Database){
                     it[this.identityId] = identityId.value
                 }
 
-                // 3. identity 테이블에 profile id를 업데이트
-                Identities.update {
-//                    it[this.profileId] = 0
-                    it[this.profileId] = profileId.value
-                }
-
                 return@transaction profileId.value
             } catch (e: Exception) {
                 rollback()

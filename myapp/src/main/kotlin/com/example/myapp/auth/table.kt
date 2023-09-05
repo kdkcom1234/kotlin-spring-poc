@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration
 object Identities : LongIdTable("identity") {
     val secret = varchar("secret", 200)
     val username = varchar("username", length = 100)
-    val profileId = reference("profile_id", Profiles).nullable()
 }
 
 object Profiles : LongIdTable("profile") {
